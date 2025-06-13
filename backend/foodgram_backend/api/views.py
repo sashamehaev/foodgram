@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
 
-from users.serializers import CustomUserSerializer
+from users.serializers import CustomUserSerializer, AvatarSerializer
 
 User = get_user_model()
 
@@ -13,59 +13,19 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
 
     def get_queryset(self):
-        return User.objects.all().order_by('id')
-    
+        return User.objects.all()
 
-    """@action(detail=False, methods=['get'])
-    def me(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)"""
-
-    """@action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
+    @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
     def avatar(self, request):
-        if request.method == 'PUT':
-            serializer = SetAvatarSerializer(data=request.data)
-            if serializer.is_valid():
-                request.user.avatar = serializer.validated_data['avatar']
-                request.user.save()
-                return Response({
-                    'avatar': request.user.avatar.url if request.user.avatar else None
-                })
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        elif request.method == 'DELETE':
-            if request.user.avatar:
-                request.user.avatar.delete()
-                request.user.avatar = None
-                request.user.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)"""
-
-"""    @action(detail=False, methods=['post'])
-    def set_password(self, request):
         user = request.user
-        current_password = request.data.get('current_password')
-        new_password = request.data.get('new_password')
-
-        if not current_password or not new_password:
-            return Response(
-                {'errors': 'Необходимо указать текущий и новый пароль'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Проверка текущего пароля
-        if not user.check_password(current_password):
-            return Response(
-                {'errors': 'Неверный текущий пароль'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Установка нового пароля
-        user.set_password(new_password)
-        user.save()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)"""
+        if request.method == 'PUT':
+            serializer = AvatarSerializer(user, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user.avatar.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 """    @action(detail=True, methods=['post', 'delete'])
     def subscribe(self, request, pk=None):

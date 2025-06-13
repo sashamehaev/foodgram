@@ -11,15 +11,10 @@ class User(AbstractUser):
         max_length=254,
         unique=True
     )
-    first_name = models.CharField(
-        max_length=150
-    )
-    last_name = models.CharField(
-        max_length=150
-    )
-    avatar = models.ImageField(
-        upload_to='users/media/'
-    )
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    avatar = models.ImageField(upload_to='users/avatar/')
+    is_subscribed = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = (
