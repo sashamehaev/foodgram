@@ -13,7 +13,7 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
 
     def get_queryset(self):
-        return User.objects.all()
+        return User.objects.all().order_by('id')
     
 
     """@action(detail=False, methods=['get'])
