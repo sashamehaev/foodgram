@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
 
 from users.serializers import CustomUserSerializer, AvatarSerializer
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -27,38 +28,27 @@ class CustomUserViewSet(UserViewSet):
         user.avatar.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-"""    @action(detail=True, methods=['post', 'delete'])
-    def subscribe(self, request, pk=None):
-        #Подписаться/отписаться от автора.
-        try:
-            author_id = int(pk)
-            author = get_object_or_404(User, pk=author_id)
-        except (ValueError, TypeError):
-            # Если ID невалидный, возвращаем 400
-            return Response(
-                {'errors': 'Некорректный ID пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    @action(detail=True, methods=['post', 'delete'])
+    def subscribe(self, request, id=None):
+        author = get_object_or_404(User, pk=id)
 
         if request.user == author:
             return Response(
-                {'errors': 'Нельзя подписаться на себя'},
+                {'message': 'Нельзя подписаться на самого себя'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if request.method == 'POST':
-            subscription, created = Subscription.objects.get_or_create(
+            _, created_status = Subscription.objects.get_or_create(
                 user=request.user, author=author
             )
-            if created:
-                serializer = SubscriptionSerializer(
-                    author, context={'request': request}
-                )
+            if created_status:
+                serializer = CustomUserSerializer(author, context={'request': request})
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED
                 )
             return Response(
-                {'errors': 'Вы уже подписаны на этого пользователя'},
+                {'message': 'Вы уже подписаны на этого пользователя'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -67,13 +57,13 @@ class CustomUserViewSet(UserViewSet):
         ).first()
         if not subscription:
             return Response(
-                {'errors': 'Вы не подписаны на этого пользователя'},
+                {'message': 'Вы не подписаны на этого пользователя'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['get'])
+    """@action(detail=False, methods=['get'])
     def subscriptions(self, request):
         # Находим всех авторов, на которых подписан пользователь
         authors = User.objects.filter(

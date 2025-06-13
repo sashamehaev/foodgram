@@ -22,3 +22,15 @@ class User(AbstractUser):
         'first_name',
         'last_name',
     )
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name='user',
+        on_delete=models.CASCADE
+    )
+    author = models.ForeignKey(
+        User,
+        related_name='author',
+        on_delete=models.CASCADE
+    )
