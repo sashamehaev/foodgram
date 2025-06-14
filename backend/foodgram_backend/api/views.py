@@ -5,8 +5,8 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
 
-from users.serializers import CustomUserSerializer, AvatarSerializer
-from users.models import Subscription
+from users.serializers import CustomUserSerializer, AvatarSerializer, SubscriptionSerializer, TagSerializer
+from users.models import Subscription, Tag
 
 User = get_user_model()
 
@@ -63,21 +63,18 @@ class CustomUserViewSet(UserViewSet):
         subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    """@action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'])
     def subscriptions(self, request):
-        # Находим всех авторов, на которых подписан пользователь
-        authors = User.objects.filter(
-            subscribed__user=request.user
-        ).order_by('id')
-
-        page = self.paginate_queryset(authors)
-        if page is not None:
-            serializer = SubscriptionSerializer(
-                page, many=True, context={'request': request}
-            )
-            return self.get_paginated_response(serializer.data)
+        authors = User.objects.filter(subscribers__user=request.user)
 
         serializer = SubscriptionSerializer(
-            authors, many=True, context={'request': request}
+            authors,
+            many=True,
+            context={'request': request}
         )
-        return Response(serializer.data)"""
+        return Response(serializer.data)
+    
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    

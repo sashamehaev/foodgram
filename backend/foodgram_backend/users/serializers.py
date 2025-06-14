@@ -2,7 +2,7 @@ import base64
 from djoser.serializers import UserSerializer
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from users.models import User, Subscription
+from users.models import User, Subscription, Tag
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
@@ -35,3 +35,23 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('avatar',)
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'email', 
+            'id', 
+            'username', 
+            'first_name', 
+            'last_name', 
+            'avatar',
+            'is_subscribed',
+        )
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = '__all__'

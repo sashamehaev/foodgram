@@ -26,11 +26,15 @@ class User(AbstractUser):
 class Subscription(models.Model):
     user = models.ForeignKey(
         User,
-        related_name='user',
+        related_name='subscriptions',
         on_delete=models.CASCADE
     )
     author = models.ForeignKey(
         User,
-        related_name='author',
+        related_name='subscribers',
         on_delete=models.CASCADE
     )
+
+class Tag(models.Model):
+    name = models.CharField(max_length=32, unique=True)
+    slug = models.SlugField(max_length=32, unique=True)
