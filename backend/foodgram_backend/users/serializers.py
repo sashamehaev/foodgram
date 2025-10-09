@@ -9,7 +9,7 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')  
             ext = format.split('/')[-1]  
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+            data = ContentFile(base64.b64decode(imgstr), name='image.' + ext)
 
         return super().to_internal_value(data)
 
@@ -63,12 +63,12 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class RecipeSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
     image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = '__all__'
+        read_only_fields = ('author',)
 
 """ class RecipeIngredientSerializer(serializers.ModelSerializer):
 

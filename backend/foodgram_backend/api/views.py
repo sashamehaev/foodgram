@@ -92,7 +92,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
 
-    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
     """def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
