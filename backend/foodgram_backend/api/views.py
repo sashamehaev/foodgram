@@ -22,7 +22,7 @@ class CustomUserViewSet(UserViewSet):
     def get_queryset(self):
         return User.objects.all()
 
-    @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
+    """ @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
     def avatar(self, request):
         user = request.user
         if request.method == 'PUT':
@@ -78,7 +78,7 @@ class CustomUserViewSet(UserViewSet):
             many=True,
             context={'request': request}
         )
-        return Response(serializer.data)
+        return Response(serializer.data) """
     
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()

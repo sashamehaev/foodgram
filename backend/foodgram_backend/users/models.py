@@ -48,7 +48,7 @@ class Recipe(models.Model):
     #ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
     #tags = models.ManyToManyField(Tag)
     name = models.CharField(max_length=256)
-    #image = models.ImageField(upload_to='recipes/media/')
+    image = models.ImageField(upload_to='recipes/media/')
     text = models.TextField()
     cooking_time = models.IntegerField()
 

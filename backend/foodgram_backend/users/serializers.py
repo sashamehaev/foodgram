@@ -14,7 +14,7 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 class CustomUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+    """ is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -23,7 +23,7 @@ class CustomUserSerializer(UserSerializer):
             ).exists()
         if is_subscribed:
             return True
-        return False
+        return False """
 
     class Meta:
         model = User
@@ -64,6 +64,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
+    image = Base64ImageField()
+
     class Meta:
         model = Recipe
         fields = '__all__'
