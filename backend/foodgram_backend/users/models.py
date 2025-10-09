@@ -38,3 +38,25 @@ class Subscription(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=32, unique=True)
     slug = models.SlugField(max_length=32, unique=True)
+
+class Ingredient(models.Model):
+    name = models.CharField(max_length=128)
+    measurement_unit = models.CharField(max_length=64)
+
+class Recipe(models.Model):
+    #author = models.ForeignKey(User, on_delete=models.CASCADE)
+    #ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
+    #tags = models.ManyToManyField(Tag)
+    name = models.CharField(max_length=256)
+    #image = models.ImageField(upload_to='recipes/media/')
+    text = models.TextField()
+    cooking_time = models.IntegerField()
+
+""" class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.IntegerField()
+
+class RecipeTag(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE) """

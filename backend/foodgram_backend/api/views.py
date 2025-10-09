@@ -5,8 +5,14 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
 
-from users.serializers import CustomUserSerializer, AvatarSerializer, SubscriptionSerializer, TagSerializer
-from users.models import Subscription, Tag
+from users.serializers import (
+    CustomUserSerializer,
+    AvatarSerializer,
+    SubscriptionSerializer,
+    TagSerializer,
+    IngredientSerializer,
+    RecipeSerializer)
+from users.models import Subscription, Tag, Ingredient, Recipe
 
 User = get_user_model()
 
@@ -77,4 +83,18 @@ class CustomUserViewSet(UserViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+
     
+    """def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)"""
