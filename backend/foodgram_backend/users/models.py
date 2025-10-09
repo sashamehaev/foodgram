@@ -44,7 +44,7 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(max_length=64)
 
 class Recipe(models.Model):
-    #author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     #ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
     #tags = models.ManyToManyField(Tag)
     name = models.CharField(max_length=256)
