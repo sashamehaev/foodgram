@@ -2,7 +2,7 @@ import base64
 from djoser.serializers import UserSerializer
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from users.models import (User, Subscription, Tag, Ingredient, Recipe)
+from users.models import (User, Subscription, Tag, TagRecipe, Ingredient, Recipe)
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
@@ -63,22 +63,44 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class RecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField()
-    tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
 
+    class Meta:
+        model = Recipe
+        fields = '__all__'
+        read_only_fields = ('author',)
+
+""" class TagRecipeSerializer(serializers.ModelSerializer):  
+    
     def create(self, validated_data):
         if 'tags' in self.initial_data:
             tags = validated_data['tags'].pop()
             print(type(tags))
         
         return self.validated_data
-     
+
+    class Meta:
+        model = TagRecipe
+        fields = '__all__' """
+
+class CreateRecipeSerializer(serializers.ModelSerializer):  
+    image = Base64ImageField()
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all(),
+        required=True)
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags)
+            
+        return recipe
 
 
     class Meta:
         model = Recipe
         fields = '__all__'
         read_only_fields = ('author',)
+
 
 """ class RecipeIngredientSerializer(serializers.ModelSerializer):
 

@@ -7,6 +7,7 @@ from djoser.views import UserViewSet
 
 from users.serializers import (
     CustomUserSerializer,
+    CreateRecipeSerializer,
     AvatarSerializer,
     SubscriptionSerializer,
     TagSerializer,
@@ -91,6 +92,12 @@ class IngredientViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CreateRecipeSerializer
+        #return RecipeSerializer
+        return {}
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

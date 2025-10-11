@@ -39,6 +39,9 @@ class Tag(models.Model):
     name = models.CharField(max_length=32, unique=True)
     slug = models.SlugField(max_length=32, unique=True)
 
+    def __getattr__(self, attr):
+        return self[attr]
+
 class Ingredient(models.Model):
     name = models.CharField(max_length=128)
     measurement_unit = models.CharField(max_length=64)
