@@ -64,6 +64,16 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
+    tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+
+    def create(self, validated_data):
+        if 'tags' in self.initial_data:
+            tags = validated_data['tags'].pop()
+            print(type(tags))
+        
+        return self.validated_data
+     
+
 
     class Meta:
         model = Recipe

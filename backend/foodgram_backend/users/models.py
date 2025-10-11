@@ -46,11 +46,15 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     #ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
-    #tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, through='TagRecipe')
     name = models.CharField(max_length=256)
     image = models.ImageField(upload_to='recipes/image/')
     text = models.TextField()
     cooking_time = models.IntegerField()
+
+class TagRecipe(models.Model):
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
 """ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
