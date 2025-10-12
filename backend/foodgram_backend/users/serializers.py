@@ -69,6 +69,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('author',)
 
+class RecipeRetrieveSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+    author = CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = Recipe
+        fields = '__all__'
+
 """ class TagRecipeSerializer(serializers.ModelSerializer):  
     
     def create(self, validated_data):
@@ -88,11 +96,14 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all(),
         required=True)
+
+    def to_representation(self, instance):
+        return RecipeRetrieveSerializer(instance, context=self.context).data
+
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags)
-            
+        recipe.tags.set(tags)  
         return recipe
 
 
