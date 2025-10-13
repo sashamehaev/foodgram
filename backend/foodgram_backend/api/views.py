@@ -13,7 +13,7 @@ from users.serializers import (
     TagSerializer,
     IngredientSerializer,
     RecipeSerializer,
-    RecipeRetrieveSerializer
+    RetrieveRecipeSerializer
 )
 from users.models import Subscription, Tag, Ingredient, Recipe
 
@@ -98,9 +98,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateRecipeSerializer
-        return RecipeRetrieveSerializer
+        return RetrieveRecipeSerializer
 
     def perform_create(self, serializer):
+        print(type(self.request.user))
         serializer.save(author=self.request.user)
 
     """def create(self, request, *args, **kwargs):

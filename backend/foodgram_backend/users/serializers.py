@@ -1,8 +1,17 @@
 import base64
+import json
 from djoser.serializers import UserSerializer
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from users.models import (User, Subscription, Tag, TagRecipe, Ingredient, Recipe)
+from users.models import (
+    User,
+    Subscription,
+    Tag, 
+    TagRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient
+)
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
@@ -69,22 +78,22 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('author',)
 
-class RecipeRetrieveSerializer(serializers.ModelSerializer):
+class RetrieveRecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     ingredients = IngredientSerializer(many=True, read_only=True)
     author = CustomUserSerializer(read_only=True)
 
     class Meta:
         model = Recipe
-        fields = (
-            'id',
-            'author',
-            'tags',
-            'image',
-            'name',
-            'cooking_time',
-            'text',
-            'ingredients'
+        fields = ('__all__'
+            #'id',
+            #'author',
+            #'tags',
+            #'image',
+            #'name',
+            #'cooking_time',
+            #'text',
+            #'ingredients'
         )
 
 """ class TagRecipeSerializer(serializers.ModelSerializer):  
@@ -100,38 +109,49 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
         model = TagRecipe
         fields = '__all__' """
 
+class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount')
+
 class CreateRecipeSerializer(serializers.ModelSerializer):  
     image = Base64ImageField()
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Tag.objects.all(),
-        required=True)
-    ingredients = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Ingredient.objects.all(),
-        required=True)
+        queryset=Tag.objects.all()
+    )
+    ingredients = CreateRecipeIngredientSerializer(many=True)
 
     def to_representation(self, instance):
-        return RecipeRetrieveSerializer(instance).data
+        return RetrieveRecipeSerializer(instance).data
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
+        for ingredient in ingredients:
+            get_ingredient = Ingredient.objects.get(pk=ingredient['id'].id)
+            print(get_ingredient)
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=get_ingredient,
+                amount=ingredient['amount']
+            )
         recipe.tags.set(tags)
-        recipe.ingredients.set(ingredients)
         return recipe
 
 
     class Meta:
         model = Recipe
-        fields = (
-            'tags',
-            'image',
-            'name',
-            'cooking_time',
-            'text',
-            'ingredients'
+        fields = ('__all__'
+            #'tags',
+            #'image',
+            #'name',
+            #'cooking_time',
+            #'text',
+            #'ingredients'
         )
         read_only_fields = ('author',)
 
