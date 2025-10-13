@@ -13,9 +13,10 @@ from users.serializers import (
     TagSerializer,
     IngredientSerializer,
     RecipeSerializer,
-    RetrieveRecipeSerializer
+    RetrieveRecipeSerializer,
+    RetrieveFavoriteSerializer
 )
-from users.models import Subscription, Tag, Ingredient, Recipe
+from users.models import Subscription, Tag, Ingredient, Recipe, Favorite
 
 User = get_user_model()
 
@@ -101,11 +102,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RetrieveRecipeSerializer
 
     def perform_create(self, serializer):
-        print(type(self.request.user))
         serializer.save(author=self.request.user)
 
-    """def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)"""
+    @action(methods=('POST',), detail=True)
+    def favorite(self, request, pk=None):
+        if request.method == 'POST':
+            recipe = get_object_or_404(Recipe, pk=pk)
+            Favorite.objects.create(user=request.user, recipe=recipe)
+
+        return Response(RetrieveFavoriteSerializer(data=recipe), status=status.HTTP_201_CREATED)

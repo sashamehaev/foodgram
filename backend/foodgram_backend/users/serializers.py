@@ -10,7 +10,8 @@ from users.models import (
     TagRecipe,
     Ingredient,
     Recipe,
-    RecipeIngredient
+    RecipeIngredient,
+    Favorite
 )
 
 class Base64ImageField(serializers.ImageField):
@@ -154,6 +155,13 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             #'ingredients'
         )
         read_only_fields = ('author',)
+
+
+class RetrieveFavoriteSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 """ class RecipeIngredientSerializer(serializers.ModelSerializer):
