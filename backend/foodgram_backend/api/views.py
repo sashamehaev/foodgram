@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from django.db import IntegrityError
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
@@ -112,7 +113,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         if request.method == 'POST':
             serializer = FavoriteSerializer(data={'user': request.user.id, 'recipe': recipe.id})
-            serializer.is_valid(raise_exception=True)
+            try:
+                serializer.is_valid(raise_exception=True)
+            except ValidationError:
+                return Response({"detail": "Рецепт в избранном"}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response(
                 RetrieveFavoriteSerializer(recipe, context={'request': request}).data,

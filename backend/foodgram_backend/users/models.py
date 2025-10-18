@@ -64,3 +64,6 @@ class RecipeIngredient(models.Model):
 class Favorite(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('recipe', 'user')
