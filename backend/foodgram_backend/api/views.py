@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status
+from django.db import IntegrityError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -14,7 +15,8 @@ from users.serializers import (
     IngredientSerializer,
     RecipeSerializer,
     RetrieveRecipeSerializer,
-    RetrieveFavoriteSerializer
+    RetrieveFavoriteSerializer,
+    FavoriteSerializer
 )
 from users.models import Subscription, Tag, Ingredient, Recipe, Favorite
 
@@ -104,10 +106,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(methods=('POST',), detail=True)
+    @action(methods=('POST', 'DELETE'), detail=True)
     def favorite(self, request, pk=None):
-        if request.method == 'POST':
-            recipe = get_object_or_404(Recipe, pk=pk)
-            Favorite.objects.create(user=request.user, recipe=recipe)
+        recipe = get_object_or_404(Recipe, pk=pk)
 
-        return Response(RetrieveFavoriteSerializer(data=recipe), status=status.HTTP_201_CREATED)
+        if request.method == 'POST':
+            serializer = FavoriteSerializer(data={'user': request.user.id, 'recipe': recipe.id})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                RetrieveFavoriteSerializer(recipe, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
+            )
+        if request.method == 'DELETE':
+            try:
+                recipe_in_favorite = Favorite.objects.get(recipe_id=recipe.id)
+            except Favorite.DoesNotExist:
+                return Response({"detail": "Рецепта нет в избранном"}, status=status.HTTP_400_BAD_REQUEST)
+            recipe_in_favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+    

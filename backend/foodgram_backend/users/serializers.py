@@ -3,6 +3,8 @@ import json
 from djoser.serializers import UserSerializer
 from django.core.files.base import ContentFile
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
 from users.models import (
     User,
     Subscription,
@@ -134,7 +136,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         for ingredient in ingredients:
             get_ingredient = Ingredient.objects.get(pk=ingredient['id'].id)
-            print(get_ingredient)
             RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient=get_ingredient,
@@ -156,12 +157,32 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('author',)
 
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Favorite
+        fields = ('__all__')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe')  
+            )
+        ]
+
+    def create(self, validated_data):
+        return Favorite.objects.create(**validated_data)
 
 class RetrieveFavoriteSerializer(serializers.ModelSerializer):
-    
+    image = serializers.SerializerMethodField()
+        
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
 
 
 """ class RecipeIngredientSerializer(serializers.ModelSerializer):
