@@ -16,7 +16,8 @@ from users.serializers import (
     IngredientSerializer,
     RecipeSerializer,
     RetrieveRecipeSerializer,
-    RetrieveFavoriteSerializer,
+    RecipeShortInfoSerializer,
+    RetrieveSubscriptionSerializer,
     FavoriteSerializer
 )
 from users.models import Subscription, Tag, Ingredient, Recipe, Favorite
@@ -29,7 +30,7 @@ class CustomUserViewSet(UserViewSet):
     def get_queryset(self):
         return User.objects.all()
 
-    """ @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
+    @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
     def avatar(self, request):
         user = request.user
         if request.method == 'PUT':
@@ -41,51 +42,37 @@ class CustomUserViewSet(UserViewSet):
         user.avatar.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'])
+    @action(methods=('POST', 'DELETE'), detail=True)
     def subscribe(self, request, id=None):
         author = get_object_or_404(User, pk=id)
 
-        if request.user == author:
-            return Response(
-                {'message': 'Нельзя подписаться на самого себя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         if request.method == 'POST':
-            _, created_status = Subscription.objects.get_or_create(
-                user=request.user, author=author
+            serializer = SubscriptionSerializer(
+                data={'user': request.user.id, 'author': author.id}
             )
-            if created_status:
-                serializer = CustomUserSerializer(author, context={'request': request})
+            try:
+                serializer.is_valid(raise_exception=True)
+            except ValidationError:
                 return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
+                    {"detail": "Вы уже подписаны на пользователя"},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
+            serializer.save()
             return Response(
-                {'message': 'Вы уже подписаны на этого пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
+                RetrieveSubscriptionSerializer(author, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
             )
+        if request.method == 'DELETE':
+            try:
+                is_subscribed = Subscription.objects.get(author_id=author.id)
+            except Subscription.DoesNotExist:
+                return Response(
+                    {"detail": "Вы не были подписаны на пользователя"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            is_subscribed.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
-        subscription = Subscription.objects.filter(
-            user=request.user, author=author
-        ).first()
-        if not subscription:
-            return Response(
-                {'message': 'Вы не подписаны на этого пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        subscription.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, methods=['get'])
-    def subscriptions(self, request):
-        authors = User.objects.filter(subscribers__user=request.user)
-
-        serializer = SubscriptionSerializer(
-            authors,
-            many=True,
-            context={'request': request}
-        )
-        return Response(serializer.data) """
     
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
@@ -112,14 +99,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            serializer = FavoriteSerializer(data={'user': request.user.id, 'recipe': recipe.id})
+            serializer = FavoriteSerializer(data={'user': request.user.id, 'recipe': recipe.pk})
             try:
                 serializer.is_valid(raise_exception=True)
             except ValidationError:
                 return Response({"detail": "Рецепт в избранном"}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
             return Response(
-                RetrieveFavoriteSerializer(recipe, context={'request': request}).data,
+                RecipeShortInfoSerializer(recipe, context={'request': request}).data,
                 status=status.HTTP_201_CREATED
             )
         if request.method == 'DELETE':
@@ -129,4 +116,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response({"detail": "Рецепта нет в избранном"}, status=status.HTTP_400_BAD_REQUEST)
             recipe_in_favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-    
