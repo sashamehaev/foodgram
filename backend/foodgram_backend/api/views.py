@@ -72,8 +72,20 @@ class CustomUserViewSet(UserViewSet):
                 )
             is_subscribed.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
     
+    @action(methods=('GET', ), detail=False)
+    def subscriptions(self, request):
+        subscriptions = Subscription.objects.filter(user_id=request.user.id)
+        authors = []
+        for subscription in subscriptions:
+            authors.append(subscription.author)
+        return Response(
+            RetrieveSubscriptionSerializer(
+                authors,
+                many=True,
+                context={'request': request}
+            ).data)
+
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
