@@ -11,6 +11,7 @@ from users.models import (
     Subscription,
     Tag, 
     TagRecipe,
+    ShoppingCart,
     Ingredient,
     Recipe,
     RecipeIngredient,
@@ -195,3 +196,15 @@ class RetrieveSubscriptionSerializer(serializers.ModelSerializer):
     
     def get_recipes_count(self, obj):
         return obj.recipe_set.all().count()
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('__all__')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ShoppingCart.objects.all(),
+                fields=('user', 'recipe')  
+            )
+        ]

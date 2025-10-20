@@ -18,9 +18,10 @@ from users.serializers import (
     RetrieveRecipeSerializer,
     RecipeShortInfoSerializer,
     RetrieveSubscriptionSerializer,
-    FavoriteSerializer
+    FavoriteSerializer,
+    ShoppingCartSerializer
 )
-from users.models import Subscription, Tag, Ingredient, Recipe, Favorite
+from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart
 
 User = get_user_model()
 
@@ -127,4 +128,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
             except Favorite.DoesNotExist:
                 return Response({"detail": "Рецепта нет в избранном"}, status=status.HTTP_400_BAD_REQUEST)
             recipe_in_favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=('POST', 'DELETE'), detail=True)      
+    def shopping_cart(self, request, pk=None):
+        recipe = get_object_or_404(Recipe, pk=pk)
+
+        if request.method == 'POST':
+            serializer = ShoppingCartSerializer(data={'user': request.user.id, 'recipe': recipe.pk})
+            try:
+                serializer.is_valid(raise_exception=True)
+            except ValidationError:
+                return Response(
+                    {"detail": "Рецепт уже есть в списке покупок"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            serializer.save()
+            return Response(
+                RecipeShortInfoSerializer(recipe, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
+            )
+        if request.method == 'DELETE':
+            try:
+                recipe_in_shopping_cart = ShoppingCart.objects.get(recipe_id=recipe.id)
+            except ShoppingCart.DoesNotExist:
+                return Response({"detail": "Рецепта нет в списке покупок"}, status=status.HTTP_400_BAD_REQUEST)
+            recipe_in_shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
