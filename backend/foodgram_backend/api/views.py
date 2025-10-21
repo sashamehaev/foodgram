@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status
+from django.db.models import Count, Sum, Avg, Max, Min
 from django.db import IntegrityError
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,7 +22,7 @@ from users.serializers import (
     FavoriteSerializer,
     ShoppingCartSerializer
 )
-from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart
+from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart, RecipeIngredient
 
 User = get_user_model()
 
@@ -152,6 +153,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
             try:
                 recipe_in_shopping_cart = ShoppingCart.objects.get(recipe_id=recipe.id)
             except ShoppingCart.DoesNotExist:
-                return Response({"detail": "Рецепта нет в списке покупок"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Рецепта нет в списке покупок"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             recipe_in_shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=('GET', ), detail=False)
+    def download_shopping_cart(self, request):
+        user = request.user
+        ingredients = (
+            RecipeIngredient.objects
+            .filter(recipe__shopping_cart__user=user)
+            .values('ingredient__name', 'ingredient__measurement_unit')
+            .annotate(total_amount=Sum('amount'))
+        )
+        content = ''
+        for ingredient in ingredients:
+            content += f"{ingredient['ingredient__name']} {ingredient['total_amount']} {ingredient['ingredient__measurement_unit']}"
+        print(content)
+        response = Response(content, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        return response

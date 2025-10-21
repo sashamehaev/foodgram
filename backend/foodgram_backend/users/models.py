@@ -65,7 +65,7 @@ class Subscription(models.Model):
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(User, related_name='user_shoppingcart', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='recipe_shoppingcart', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='shopping_cart', on_delete=models.CASCADE)
     
     class Meta:
         unique_together = ('user', 'recipe')
