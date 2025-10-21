@@ -74,7 +74,7 @@ class CustomUserViewSet(UserViewSet):
                 )
             is_subscribed.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
     @action(methods=('GET', ), detail=False)
     def subscriptions(self, request):
         subscriptions = Subscription.objects.filter(user_id=request.user.id)
@@ -176,3 +176,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response = Response(content, content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
+
+    @action(methods=('GET', ), detail=True, url_path='get-link')
+    def get_link(self, request, pk=None):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        short_link = request.build_absolute_uri(f'/recipes/{recipe.id}/')
+        return Response({'short-link': short_link})
