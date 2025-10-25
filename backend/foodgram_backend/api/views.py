@@ -108,7 +108,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    """ @action(methods=['POST', 'DELETE'], detail=True, url_path='favorite')
+    @action(methods=['POST', 'DELETE'], detail=True, url_path='favorite')
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
 
@@ -181,4 +181,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         short_link = request.build_absolute_uri(f'/recipes/{recipe.id}/')
         return Response({'short-link': short_link})
- """
