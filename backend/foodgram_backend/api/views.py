@@ -101,14 +101,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method in ('POST', 'PATCH'):
             return CreateRecipeSerializer
         return RetrieveRecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(methods=('POST', 'DELETE'), detail=True)
+    """ @action(methods=['POST', 'DELETE'], detail=True, url_path='favorite')
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
 
@@ -131,7 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe_in_favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=('POST', 'DELETE'), detail=True)      
+    @action(methods=['POST', 'DELETE'], detail=True, url_path='shopping_cart')      
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
 
@@ -160,7 +160,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe_in_shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=('GET', ), detail=False)
+    @action(methods=['GET'], detail=False, url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         user = request.user
         ingredients = (
@@ -172,13 +172,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         content = ''
         for ingredient in ingredients:
             content += f"{ingredient['ingredient__name']} {ingredient['total_amount']} {ingredient['ingredient__measurement_unit']}"
-        print(content)
         response = Response(content, content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
 
-    @action(methods=('GET', ), detail=True, url_path='get-link')
+    @action(methods=['GET'], detail=True, url_path='get-link')
     def get_link(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         short_link = request.build_absolute_uri(f'/recipes/{recipe.id}/')
         return Response({'short-link': short_link})
+ """

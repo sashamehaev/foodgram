@@ -45,7 +45,7 @@ class TagRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='ingredients_in_recipe', on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.IntegerField()
 
@@ -64,7 +64,7 @@ class Subscription(models.Model):
         unique_together = ('author', 'user')
 
 class ShoppingCart(models.Model):
-    user = models.ForeignKey(User, related_name='user_shoppingcart', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='shopping_cart', on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name='shopping_cart', on_delete=models.CASCADE)
     
     class Meta:

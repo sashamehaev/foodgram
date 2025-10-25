@@ -1,5 +1,4 @@
 import base64
-import json
 from djoser.serializers import UserSerializer
 from rest_framework.response import Response
 from django.core.files.base import ContentFile
@@ -9,8 +8,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from users.models import (
     User,
     Subscription,
-    Tag, 
-    TagRecipe,
+    Tag,
     ShoppingCart,
     Ingredient,
     Recipe,
@@ -119,6 +117,26 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
         return recipe
 
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags', None)
+        ingredients = validated_data.pop('ingredients', None)
+        recipe = super().update(instance, validated_data)
+        
+        if ingredients is None:
+            raise serializers.ValidationError({'ingredients': 'Поле обязательно.'})
+        if tags is None:
+            raise serializers.ValidationError({'tags': 'Поле обязательно.'})
+
+        for ingredient in ingredients:
+            get_ingredient = Ingredient.objects.get(pk=ingredient['id'].id)
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=get_ingredient,
+                amount=ingredient['amount']
+            )
+        recipe.tags.set(tags)
+        
+        return recipe
 
     class Meta:
         model = Recipe
@@ -146,7 +164,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 class RecipeShortInfoSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-        
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
