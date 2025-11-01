@@ -25,6 +25,22 @@ class Base64ImageField(serializers.ImageField):
 
         return super().to_internal_value(data)
 
+class UserAuthSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'password',
+            'email',
+            'first_name',
+            'last_name'
+        )
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
+
 class CustomUserSerializer(UserSerializer):
     """ is_subscribed = serializers.SerializerMethodField()
 
@@ -39,7 +55,15 @@ class CustomUserSerializer(UserSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'avatar', 'is_subscribed')
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'avatar',
+            'is_subscribed'
+        )
 
 class AvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=False, allow_null=True)
@@ -91,10 +115,14 @@ class RetrieveRecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
         return Favorite.objects.filter(user=user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
 class CreateRecipeIngredientSerializer(serializers.ModelSerializer):

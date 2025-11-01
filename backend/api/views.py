@@ -1,12 +1,15 @@
 from rest_framework import viewsets, status
-from django.db.models import Count, Sum, Avg, Max, Min
-from django.db import IntegrityError
+from django.db.models import Sum
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
 
 from users.serializers import (
     CustomUserSerializer,
@@ -22,6 +25,7 @@ from users.serializers import (
     FavoriteSerializer,
     ShoppingCartSerializer
 )
+
 from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart, RecipeIngredient
 
 User = get_user_model()
@@ -32,7 +36,7 @@ class CustomUserViewSet(UserViewSet):
     def get_queryset(self):
         return User.objects.all()
 
-    @action(detail=False, methods=['put', 'delete'], url_path='me/avatar')
+    @action(detail=False, methods=['PUT', 'DELETE'], url_path='me/avatar')
     def avatar(self, request):
         user = request.user
         if request.method == 'PUT':
@@ -44,7 +48,7 @@ class CustomUserViewSet(UserViewSet):
         user.avatar.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=('POST', 'DELETE'), detail=True)
+    @action(methods=['POST', 'DELETE'], detail=True)
     def subscribe(self, request, id=None):
         author = get_object_or_404(User, pk=id)
 
