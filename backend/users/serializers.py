@@ -1,6 +1,8 @@
 import base64
 from djoser.serializers import UserSerializer
+from django.contrib.auth.password_validation import validate_password
 from rest_framework.response import Response
+from django.core.validators import RegexValidator
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -25,33 +27,10 @@ class Base64ImageField(serializers.ImageField):
 
         return super().to_internal_value(data)
 
-class UserAuthSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (
-            'id',
-            'username',
-            'password',
-            'email',
-            'first_name',
-            'last_name'
-        )
-
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
-
 
 class CustomUserSerializer(UserSerializer):
-    """ is_subscribed = serializers.SerializerMethodField()
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        is_subscribed = Subscription.objects.filter(
-                user=request.user, author=obj
-            ).exists()
-        if is_subscribed:
-            return True
-        return False """
+    is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
@@ -64,6 +43,53 @@ class CustomUserSerializer(UserSerializer):
             'avatar',
             'is_subscribed'
         )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        is_subscribed = Subscription.objects.filter(
+                user=request.user, author=obj
+            ).exists()
+        if is_subscribed:
+            return True
+        return False
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(
+            regex=r'^[\w.@+-]+\Z',
+            message='Enter a valid username.'
+        )]
+    )
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        allow_blank=False,
+        error_messages={
+            'blank': 'Password cannot be empty.',
+            'min_length': 'Password must be at least 8 characters long.'
+        },
+        validators=[validate_password]
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        )
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+    
 
 class AvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=False, allow_null=True)

@@ -1,18 +1,15 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from django.db.models import Sum
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from djoser.views import UserViewSet
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly
-)
+from django_filters.rest_framework import DjangoFilterBackend
 
 from users.serializers import (
     CustomUserSerializer,
+    UserCreateSerializer,
     CreateRecipeSerializer,
     AvatarSerializer,
     SubscriptionSerializer,
@@ -25,16 +22,22 @@ from users.serializers import (
     FavoriteSerializer,
     ShoppingCartSerializer
 )
-
+from api.permissions import IsAuthorOrReadOnly
+from api.filters import IngredientFilter, RecipeFilter
 from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart, RecipeIngredient
 
 User = get_user_model()
 
-class CustomUserViewSet(UserViewSet):
-    serializer_class = CustomUserSerializer
+class CustomUserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    permission_classes = [permissions.AllowAny]
 
-    def get_queryset(self):
-        return User.objects.all()
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserCreateSerializer
+        if self.action in ['subscriptions', 'subscribe']:
+            return SubscriptionSerializer
+        return CustomUserSerializer
 
     @action(detail=False, methods=['PUT', 'DELETE'], url_path='me/avatar')
     def avatar(self, request):
@@ -102,8 +105,12 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthorOrReadOnly]
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
+    lookup_field = 'id'
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH'):

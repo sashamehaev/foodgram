@@ -24,9 +24,9 @@ services:
       - static:/static
   gateway:
     build: ./gateway/
-    #ждет запросы от хоста на 8000 порт и перенаправляет их на 80 порт контейнера gateway
+    #ждет запросы от хоста на 80 порт и перенаправляет их на 80 порт контейнера gateway
     ports:
-      - 9000:80
+      - 80:80
     volumes:
       - static:/staticfiles/
       - media:/media/
