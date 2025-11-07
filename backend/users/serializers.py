@@ -102,13 +102,13 @@ class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ('id', 'name', 'slug')
 
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
 
 class RecipeSerializer(serializers.ModelSerializer):
 
@@ -119,8 +119,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 class RetrieveRecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
-    ingredients = IngredientSerializer(many=True, read_only=True)
     author = CustomUserSerializer(read_only=True)
+    ingredients = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -139,6 +140,18 @@ class RetrieveRecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
+    def get_ingredients(self, obj):
+        ingredients = []
+        for recipe in obj.recipe_ingredients.all():
+            if recipe.ingredient is not None:
+                ingredients.append({
+                    'id': recipe.ingredient.id,
+                    'name': recipe.ingredient.name,
+                    'measurement_unit': recipe.ingredient.measurement_unit,
+                    'amount': recipe.amount
+                })
+        return ingredients
+
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
         if user.is_anonymous:
@@ -150,6 +163,12 @@ class RetrieveRecipeSerializer(serializers.ModelSerializer):
         if user.is_anonymous:
             return False
         return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+    
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return ''
+
 
 class CreateRecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())

@@ -3,7 +3,7 @@ from django.db.models import Sum
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
@@ -33,7 +33,7 @@ User = get_user_model()
 
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -42,7 +42,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             return SubscriptionSerializer
         return CustomUserSerializer
 
-    @action(detail=False, methods=['PUT', 'DELETE'], url_path='me/avatar')
+    @action(methods=['PUT', 'DELETE'], detail=False, url_path='me/avatar', permission_classes=[IsAuthenticated])
     def avatar(self, request):
         user = request.user
         if request.method == 'PUT':
@@ -54,7 +54,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         user.avatar.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['POST', 'DELETE'], detail=True)
+    @action(methods=['POST', 'DELETE'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
         author = get_object_or_404(User, pk=id)
 
@@ -85,7 +85,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             is_subscribed.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'], detail=False)
+    @action(methods=['GET'], detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
         subscriptions = Subscription.objects.filter(user_id=request.user.id)
         authors = []
@@ -98,7 +98,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
                 context={'request': request}
             ).data)
     
-    @action(methods=['GET'], detail=False)
+    @action(methods=['GET'], detail=False, permission_classes=[IsAuthenticated])
     def me(self, request):
         serializer = self.get_serializer(
             request.user, context={'request': request})
@@ -131,20 +131,17 @@ class IngredientViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthorOrReadOnly]
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = RecipeFilter
-    lookup_field = 'id'
+    serializer_class = RetrieveRecipeSerializer
 
     def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH'):
-            return CreateRecipeSerializer
-        return RetrieveRecipeSerializer
+        if self.action in ['list', 'retrieve']:
+            return RetrieveRecipeSerializer
+        return CreateRecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(methods=['POST', 'DELETE'], detail=True, url_path='favorite')
+    @action(methods=['POST', 'DELETE'], detail=True)
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
 
