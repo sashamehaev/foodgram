@@ -82,7 +82,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             is_subscribed.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=('GET', ), detail=False)
+    @action(methods=['GET'], detail=False)
     def subscriptions(self, request):
         subscriptions = Subscription.objects.filter(user_id=request.user.id)
         authors = []
@@ -94,6 +94,12 @@ class CustomUserViewSet(viewsets.ModelViewSet):
                 many=True,
                 context={'request': request}
             ).data)
+    
+    @action(methods=['GET'], detail=False)
+    def me(self, request):
+        serializer = self.get_serializer(
+            request.user, context={'request': request})
+        return Response(serializer.data)
 
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
