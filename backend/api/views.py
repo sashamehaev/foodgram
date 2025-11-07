@@ -2,7 +2,10 @@ from rest_framework import viewsets, status, permissions
 from django.db.models import Sum
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -100,7 +103,22 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(
             request.user, context={'request': request})
         return Response(serializer.data)
+    
+    @action(methods=['POST'], detail=False, permission_classes = [IsAuthenticated])
+    def set_password(self, request):
+        serializer = SetPasswordSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
 
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+        
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
