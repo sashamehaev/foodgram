@@ -33,8 +33,8 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
-    tags = models.ManyToManyField(Tag, through='TagRecipe')
+    ingredients = models.ManyToManyField(Ingredient, related_name='recipes', through='RecipeIngredient')
+    tags = models.ManyToManyField(Tag, related_name='recipes', through='TagRecipe')
     name = models.CharField(max_length=256)
     image = models.ImageField(upload_to='recipes/image/')
     text = models.TextField()
@@ -52,20 +52,20 @@ class RecipeIngredient(models.Model):
 class Favorite(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    
+
     class Meta:
         unique_together = ('recipe', 'user')
 
 class Subscription(models.Model):
     user = models.ForeignKey(User, related_name='user', on_delete=models.CASCADE)
     author = models.ForeignKey(User, related_name='author', on_delete=models.CASCADE)
-    
+
     class Meta:
         unique_together = ('author', 'user')
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(User, related_name='shopping_cart', on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name='shopping_cart', on_delete=models.CASCADE)
-    
+
     class Meta:
         unique_together = ('user', 'recipe')
