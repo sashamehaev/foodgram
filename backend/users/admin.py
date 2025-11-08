@@ -38,10 +38,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related('author').prefetch_related(
-            'tags',
-            'recipe_ingredients__ingredient'
-        )
+        return queryset.select_related('author').prefetch_related('tags', 'ingredients_in_recipe__ingredient')
 
 
 admin.site.register(Subscription)

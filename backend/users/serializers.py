@@ -142,7 +142,7 @@ class RetrieveRecipeSerializer(serializers.ModelSerializer):
 
     def get_ingredients(self, obj):
         ingredients = []
-        for recipe in obj.recipe_ingredients.all():
+        for recipe in obj.ingredients_in_recipe.all():
             if recipe.ingredient is not None:
                 ingredients.append({
                     'id': recipe.ingredient.id,
