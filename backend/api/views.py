@@ -23,11 +23,12 @@ from users.serializers import (
     RecipeShortInfoSerializer,
     RetrieveSubscriptionSerializer,
     FavoriteSerializer,
-    ShoppingCartSerializer
+    ShoppingCartSerializer,
+    CreateSubscriptionSerializer
 )
 from api.permissions import IsAuthorOrReadOnly
 from api.filters import IngredientFilter, RecipeFilter
-from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart, RecipeIngredient
+from users.models import Subscription, Tag, Ingredient, Recipe, Favorite, ShoppingCart
 
 User = get_user_model()
 
@@ -57,23 +58,15 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     @action(methods=['POST', 'DELETE'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, pk=None):
         author = get_object_or_404(User, pk=pk)
+        user = request.user
 
         if request.method == 'POST':
-            serializer = SubscriptionSerializer(
-                data={'user': request.user.id, 'author': author.id}
+            serializer = CreateSubscriptionSerializer(
+                data={'author': author.id}, context={'request': request}
             )
-            try:
-                serializer.is_valid(raise_exception=True)
-            except ValidationError:
-                return Response(
-                    {"detail": "Вы уже подписаны на пользователя"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            serializer.save()
-            return Response(
-                RetrieveSubscriptionSerializer(author, context={'request': request}).data,
-                status=status.HTTP_201_CREATED
-            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=user, author=author)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             try:
                 is_subscribed = Subscription.objects.get(author_id=author.id)
@@ -130,6 +123,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
     lookup_field = 'id'
 
+
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -137,6 +131,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_class = IngredientFilter
+
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
@@ -153,6 +148,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        read_serializer = RetrieveRecipeSerializer(serializer.instance, context={'request': request})
+        return Response(read_serializer.data)
 
     @action(methods=['POST', 'DELETE'], detail=True)
     def favorite(self, request, id=None):

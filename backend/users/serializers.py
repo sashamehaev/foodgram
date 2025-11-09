@@ -302,3 +302,27 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
                 fields=('user', 'recipe')  
             )
         ]
+
+
+class CreateSubscriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Subscription
+        fields = ('author',)
+
+    def validate(self, data):
+        user = self.context['request'].user
+        author = data['author']
+
+        if user == author:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя.'
+            )
+        if Subscription.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны.'
+            )
+        return data
+
+    def create(self, validated_data):
+        return Subscription.objects.create(**validated_data)
