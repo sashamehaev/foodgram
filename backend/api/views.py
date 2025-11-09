@@ -9,7 +9,6 @@ from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-
 from users.serializers import (
     CustomUserSerializer,
     UserCreateSerializer,

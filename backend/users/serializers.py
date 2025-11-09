@@ -6,7 +6,6 @@ from django.core.validators import RegexValidator
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
 from users.models import (
     User,
     Subscription,
