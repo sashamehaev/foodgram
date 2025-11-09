@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status, permissions
 from django.db.models import Sum
+from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -54,8 +55,8 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['POST', 'DELETE'], detail=True, permission_classes=[IsAuthenticated])
-    def subscribe(self, request, id=None):
-        author = get_object_or_404(User, pk=id)
+    def subscribe(self, request, pk=None):
+        author = get_object_or_404(User, pk=pk)
 
         if request.method == 'POST':
             serializer = SubscriptionSerializer(
@@ -150,8 +151,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     @action(methods=['POST', 'DELETE'], detail=True)
-    def favorite(self, request, pk=None):
-        recipe = get_object_or_404(Recipe, pk=pk)
+    def favorite(self, request, id=None):
+        recipe = get_object_or_404(Recipe, id=id)
 
         if request.method == 'POST':
             serializer = FavoriteSerializer(data={'user': request.user.id, 'recipe': recipe.pk})
@@ -201,19 +202,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe_in_shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'], detail=False, url_path='download_shopping_cart')
+    @action(methods=['GET'], detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = request.user
         ingredients = (
-            RecipeIngredient.objects
-            .filter(recipe__shopping_cart__user=user)
-            .values('ingredient__name', 'ingredient__measurement_unit')
-            .annotate(total_amount=Sum('amount'))
+            ShoppingCart.objects
+            .filter(user=request.user)
+            .values('recipe__ingredients__name', 'recipe__ingredients__measurement_unit')
+            .annotate(total_amount=Sum('recipe__ingredients_in_recipe__amount'))
         )
-        content = ''
+        content = 'Список покупок:\n'
         for ingredient in ingredients:
-            content += f"{ingredient['ingredient__name']} {ingredient['total_amount']} {ingredient['ingredient__measurement_unit']}"
-        response = Response(content, content_type='text/plain')
+            content += (
+                f'{ingredient["recipe__ingredients__name"]} '
+                f'{ingredient["recipe__ingredients__measurement_unit"]} '
+                f'{ingredient["total_amount"]}\n'
+            )
+        response = HttpResponse(content, content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
 

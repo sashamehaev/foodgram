@@ -7,7 +7,8 @@ from .models import (
     Ingredient,
     User,
     RecipeIngredient,
-    TagRecipe
+    TagRecipe,
+    ShoppingCart
 )
 
 @admin.register(Tag)
@@ -42,5 +43,6 @@ class RecipeAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Subscription)
+admin.site.register(ShoppingCart)
 admin.site.register(Ingredient)
 admin.site.register(User)
