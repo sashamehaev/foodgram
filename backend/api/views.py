@@ -172,9 +172,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe_in_favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['POST', 'DELETE'], detail=True, url_path='shopping_cart')      
-    def shopping_cart(self, request, pk=None):
-        recipe = get_object_or_404(Recipe, pk=pk)
+    @action(methods=['POST', 'DELETE'], detail=True)      
+    def shopping_cart(self, request, id=None):
+        recipe = get_object_or_404(Recipe, id=id)
 
         if request.method == 'POST':
             serializer = ShoppingCartSerializer(data={'user': request.user.id, 'recipe': recipe.pk})
