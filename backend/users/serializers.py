@@ -1,4 +1,5 @@
 import base64
+
 from djoser.serializers import UserSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
