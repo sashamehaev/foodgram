@@ -25,7 +25,16 @@ class User(AbstractUser):
 
 class Tag(models.Model):
     name = models.CharField(max_length=32, unique=True)
-    slug = models.SlugField(max_length=32, unique=True)
+    slug = models.SlugField(max_length=32, unique=True, verbose_name='Slug')
+
+    class Meta:
+        verbose_name = 'Tag'
+        verbose_name_plural = 'Tags'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+    
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=128)
@@ -64,8 +73,8 @@ class Subscription(models.Model):
         unique_together = ('author', 'user')
 
 class ShoppingCart(models.Model):
-    user = models.ForeignKey(User, related_name='shopping_cart', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='shopping_cart', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='shopping_carts', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='shopping_carts', on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('user', 'recipe')

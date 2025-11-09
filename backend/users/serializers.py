@@ -110,12 +110,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
-class RecipeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = '__all__'
-        read_only_fields = ('author',)
 
 class RetrieveRecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
@@ -137,7 +131,7 @@ class RetrieveRecipeSerializer(serializers.ModelSerializer):
             'name',
             'image',
             'text',
-            'cooking_time',
+            'cooking_time'
         )
 
     def get_ingredients(self, obj):
@@ -225,13 +219,9 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('__all__'
-            #'tags',
-            #'image',
-            #'name',
-            #'cooking_time',
-            #'text',
-            #'ingredients'
+        fields = (
+            'id', 'tags', 'ingredients', 'name', 'image',
+            'text', 'cooking_time'
         )
         read_only_fields = ('author',)
 

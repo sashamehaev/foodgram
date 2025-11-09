@@ -18,7 +18,6 @@ from users.serializers import (
     SubscriptionSerializer,
     TagSerializer,
     IngredientSerializer,
-    RecipeSerializer,
     RetrieveRecipeSerializer,
     RecipeShortInfoSerializer,
     RetrieveSubscriptionSerializer,
@@ -119,19 +118,28 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
         
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [AllowAny]
     pagination_class = None
+    lookup_field = 'id'
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthorOrReadOnly]
     queryset = Recipe.objects.all()
     serializer_class = RetrieveRecipeSerializer
+    permission_classes = [IsAuthorOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
+    lookup_field = 'id'
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
