@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status, permissions
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -87,23 +87,27 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['GET'], detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        subscriptions = Subscription.objects.filter(user_id=request.user.id)
-        authors = []
-        for subscription in subscriptions:
-            authors.append(subscription.author)
-        return Response(
-            RetrieveSubscriptionSerializer(
-                authors,
-                many=True,
-                context={'request': request}
-            ).data)
+        user = request.user
+        recipes_limit = request.query_params.get('recipes_limit')
+        context = {'request': request}
+        if recipes_limit and recipes_limit.isdigit():
+            context['recipes_limit'] = int(recipes_limit)
+
+        authors = User.objects.filter(
+            authors__user=user
+        ).annotate(
+            recipes_count=Count('recipe_author')
+        )
+        page = self.paginate_queryset(authors)
+        serializer = RetrieveSubscriptionSerializer(page, many=True, context=context)
+        return self.get_paginated_response(serializer.data)
     
     @action(methods=['GET'], detail=False, permission_classes=[IsAuthenticated])
     def me(self, request):
         serializer = self.get_serializer(
             request.user, context={'request': request})
         return Response(serializer.data)
-    
+
     @action(methods=['POST'], detail=False, permission_classes = [IsAuthenticated])
     def set_password(self, request):
         serializer = SetPasswordSerializer(

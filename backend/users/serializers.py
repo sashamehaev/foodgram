@@ -238,22 +238,19 @@ class FavoriteSerializer(serializers.ModelSerializer):
         ]
 
 class RecipeShortInfoSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url)
-
 class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = ('__all__')
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'avatar', 'recipes', 'recipes_count'
+        )
         validators = [
             UniqueTogetherValidator(
                 queryset=Subscription.objects.all(),
@@ -263,8 +260,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class RetrieveSubscriptionSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.ImageField(read_only=True)
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
@@ -281,14 +279,17 @@ class RetrieveSubscriptionSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        return Subscription.objects.filter(author_id=obj.id).exists()
+        request = self.context.get('request')
+        return Subscription.objects.filter(user=request.user, author=obj).exists()
     
     def get_recipes(self, obj):
-        recipes = obj.recipe_set.all()
-        return RecipeShortInfoSerializer(recipes, many=True, context=self.context).data
-    
-    def get_recipes_count(self, obj):
-        return obj.recipe_set.all().count()
+        request = self.context.get('request')
+        recipes = obj.recipe_author.all()
+        limit = request.query_params.get('recipes_limit')
+        if limit and limit.isdigit():
+            recipes = recipes[:int(limit)]
+        return RecipeShortInfoSerializer(recipes, many=True, context={'request': request}).data
+
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
 

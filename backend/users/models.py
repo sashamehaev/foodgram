@@ -41,7 +41,7 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(max_length=64)
 
 class Recipe(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipe_author')
     ingredients = models.ManyToManyField(Ingredient, related_name='recipes', through='RecipeIngredient')
     tags = models.ManyToManyField(Tag, related_name='recipes', through='TagRecipe')
     name = models.CharField(max_length=256)
@@ -67,7 +67,7 @@ class Favorite(models.Model):
 
 class Subscription(models.Model):
     user = models.ForeignKey(User, related_name='user', on_delete=models.CASCADE)
-    author = models.ForeignKey(User, related_name='author', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='authors', on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('author', 'user')
